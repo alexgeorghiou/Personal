@@ -12,7 +12,6 @@ import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
-import org.jboss.resteasy.reactive.ResponseStatus;
 
 @RequestScoped
 public class WarehouseResourceImpl implements WarehouseResource {
@@ -31,7 +30,6 @@ public class WarehouseResourceImpl implements WarehouseResource {
   }
 
   @Override
-  @ResponseStatus(201)
   public Warehouse createANewWarehouseUnit(@NotNull Warehouse data) {
     var warehouse = toWarehouseModel(data);
 

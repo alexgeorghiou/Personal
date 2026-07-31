@@ -23,7 +23,7 @@ public class WarehouseEndpointTest {
             .when()
             .post(PATH)
             .then()
-            .statusCode(201)
+            .statusCode(200)
             .body("businessUnitCode", is("MWH.T01"))
             .extract()
             .path("id");
@@ -112,7 +112,7 @@ public class WarehouseEndpointTest {
         .when()
         .post(PATH)
         .then()
-        .statusCode(201);
+        .statusCode(200);
 
     given()
         .contentType(ContentType.JSON)

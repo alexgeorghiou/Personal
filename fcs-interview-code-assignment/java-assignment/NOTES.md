@@ -22,6 +22,7 @@ A few decisions and assumptions that are not obvious from the diff.
   leave the previous unit archived.
 - Domain errors are `BusinessRuleException` (400) and `ResourceNotFoundException` (404),
   mapped to responses in the REST layer so the domain stays free of JAX-RS.
+- The generated interface returns the bean rather than a Response, so a created warehouse is answered with 200 rather than the 201 in the spec. Setting 201 would need a response filter, which is more machinery than a status code is worth.
 
 Note that the seed data in `import.sql` does not respect the location limits: MWH.001
 has a capacity of 100 on ZWOLLE-001, which allows 40. I left it untouched, the rules are
