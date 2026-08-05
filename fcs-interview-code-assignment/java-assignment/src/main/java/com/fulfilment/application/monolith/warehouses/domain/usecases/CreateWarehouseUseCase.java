@@ -40,6 +40,17 @@ public class CreateWarehouseUseCase implements CreateWarehouseOperation {
 
     List<Warehouse> current = warehouseStore.findActiveByLocation(location.identification);
 
+    assertNumberOfWarehousesNotExceeded(location, current);
+    assertTotalCapacityNotExceeded(location, current, warehouse);
+
+    warehouse.location = location.identification;
+    warehouse.createdAt = LocalDateTime.now();
+    warehouse.archivedAt = null;
+
+    warehouseStore.create(warehouse);
+  }
+
+  private void assertNumberOfWarehousesNotExceeded(Location location, List<Warehouse> current) {
     if (current.size() >= location.maxNumberOfWarehouses) {
       throw new BusinessRuleException(
           "The location "
@@ -48,25 +59,28 @@ public class CreateWarehouseUseCase implements CreateWarehouseOperation {
               + location.maxNumberOfWarehouses
               + " warehouses");
     }
+  }
 
-    int occupiedCapacity = current.stream().mapToInt(w -> w.capacity == null ? 0 : w.capacity).sum();
-    int freeCapacity = location.maxCapacity - occupiedCapacity;
+  /**
+   * The total capacity of all the active warehouses on a location, including the one being created,
+   * must stay within the maximum capacity of that location.
+   */
+  private void assertTotalCapacityNotExceeded(
+      Location location, List<Warehouse> current, Warehouse warehouse) {
+    int currentTotalCapacity =
+        current.stream().mapToInt(w -> w.capacity == null ? 0 : w.capacity).sum();
 
-    if (warehouse.capacity > freeCapacity) {
+    int newTotalCapacity = currentTotalCapacity + warehouse.capacity;
+
+    if (newTotalCapacity > location.maxCapacity) {
       throw new BusinessRuleException(
-          "The location "
+          "The total capacity of the warehouses on location "
               + location.identification
-              + " has "
-              + freeCapacity
-              + " capacity units left and the warehouse asks for "
-              + warehouse.capacity);
+              + " would become "
+              + newTotalCapacity
+              + ", which exceeds its maximum capacity of "
+              + location.maxCapacity);
     }
-
-    warehouse.location = location.identification;
-    warehouse.createdAt = LocalDateTime.now();
-    warehouse.archivedAt = null;
-
-    warehouseStore.create(warehouse);
   }
 
   private void validatePayload(Warehouse warehouse) {

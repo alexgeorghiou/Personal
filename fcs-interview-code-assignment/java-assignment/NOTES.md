@@ -4,6 +4,11 @@ A few decisions and assumptions that are not obvious from the diff.
 
 ## Warehouse
 
+- The capacity check is cumulative: the total capacity of every active warehouse on a
+  location, including the one being created, has to stay within the maximum capacity of
+  that location. A warehouse is therefore rejected even when its own capacity is below
+  the maximum, if the warehouses already there leave no room for it. Archived units do
+  not count, since they no longer occupy the location.
 - `WarehouseStore.getAll()` returns only the active units. Archived warehouses are kept
   as history of a business unit code, so listing them next to the live ones would be
   misleading, and the archiving integration test expects the archived unit to disappear

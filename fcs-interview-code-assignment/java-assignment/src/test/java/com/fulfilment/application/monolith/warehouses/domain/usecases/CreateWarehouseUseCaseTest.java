@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.fulfilment.application.monolith.exceptions.BusinessRuleException;
 import com.fulfilment.application.monolith.location.LocationGateway;
+import com.fulfilment.application.monolith.warehouses.domain.models.Warehouse;
+import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 
 public class CreateWarehouseUseCaseTest {
@@ -82,8 +84,48 @@ public class CreateWarehouseUseCaseTest {
             () -> useCase.create(warehouse("MWH.101", "ZWOLLE-002", 25, 5)));
 
     assertEquals(
-        "The location ZWOLLE-002 has 20 capacity units left and the warehouse asks for 25",
+        "The total capacity of the warehouses on location ZWOLLE-002 would become 55, which"
+            + " exceeds its maximum capacity of 50",
         exception.getMessage());
+  }
+
+  @Test
+  public void testTheCapacityOfEveryWarehouseOnTheLocationCounts() {
+    // AMSTERDAM-001 accepts 5 warehouses and 100 capacity units in total
+    var store =
+        new InMemoryWarehouseStore(
+            warehouse("MWH.100", "AMSTERDAM-001", 40, 10),
+            warehouse("MWH.101", "AMSTERDAM-001", 30, 10),
+            warehouse("MWH.102", "AMSTERDAM-001", 20, 10));
+    var useCase = new CreateWarehouseUseCase(store, new LocationGateway());
+
+    var exception =
+        assertThrows(
+            BusinessRuleException.class,
+            () -> useCase.create(warehouse("MWH.103", "AMSTERDAM-001", 15, 5)));
+
+    assertEquals(
+        "The total capacity of the warehouses on location AMSTERDAM-001 would become 105, which"
+            + " exceeds its maximum capacity of 100",
+        exception.getMessage());
+
+    // the location still has room for exactly 10 units
+    useCase.create(warehouse("MWH.103", "AMSTERDAM-001", 10, 5));
+
+    assertEquals(4, store.getAll().size());
+  }
+
+  @Test
+  public void testTheCapacityOfArchivedWarehousesIsNotCounted() {
+    Warehouse archived = warehouse("MWH.100", "TILBURG-001", 40, 0);
+    archived.archivedAt = LocalDateTime.now();
+
+    var store = new InMemoryWarehouseStore(archived);
+    var useCase = new CreateWarehouseUseCase(store, new LocationGateway());
+
+    useCase.create(warehouse("MWH.101", "TILBURG-001", 40, 5));
+
+    assertEquals(1, store.getAll().size());
   }
 
   @Test
